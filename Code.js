@@ -1,12 +1,8 @@
 function execMarkStudentCode() {
   const spreadsheetId = getSheetId();
   const ss = SpreadsheetApp.openById(spreadsheetId);
-  // Get the active spreadsheet and sheet
   const sheet = ss.getSheetByName("Lưu trữ");
   const mainSheet = ss.getSheetByName("Danh sách gửi mail");
-  const savedData = sheet
-    .getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn())
-    .getValues();
   const mLastRow = mainSheet.getLastRow();
   const mLastCol = mainSheet.getLastColumn();
   const mainData = mainSheet.getRange(1, 1, mLastRow, mLastCol).getValues();
@@ -24,7 +20,7 @@ function execMarkStudentCode() {
     .getRange(1, vehicleIdx + 1, mLastRow, 1)
     .getValues();
 
-  const savedMap = getSavedData(savedData);
+  const savedMap = getSavedData(mainSheet);
 
   const [tCountStr, tCountIdx] = savedMap.get("tCount");
   const [xCountStr, xCountIdx] = savedMap.get("xCount");
@@ -97,10 +93,7 @@ function execGenerateDocuments() {
   const ss = SpreadsheetApp.openById(spreadsheetId);
   const ui = SpreadsheetApp.getUi();
   const savingSheet = ss.getSheetByName("Lưu trữ");
-  const savedData = savingSheet
-    .getRange(1, 1, savingSheet.getLastRow(), savingSheet.getLastColumn())
-    .getValues();
-  const savedValue = getSavedData(savedData);
+  const savedValue = getSavedData(savingSheet);
   let [templateDocUrl, templateDocIdx] = savedValue.get("templateLink");
 
   const sheet = ss.getSheetByName("Danh sách gửi mail");
@@ -249,10 +242,7 @@ function execSendMail() {
   const ss = SpreadsheetApp.openById(spreadsheetId);
   const sheet = ss.getSheetByName("Danh sách gửi mail");
   const savingSheet = ss.getSheetByName("Lưu trữ");
-  const savedData = savingSheet
-    .getRange(1, 1, savingSheet.getLastRow(), savingSheet.getLastColumn())
-    .getValues();
-  const savedValue = getSavedData(savedData);
+  const savedValue = getSavedData(savingSheet);
   const [howToStayLink] = savedValue.get("howToStayLink");
 
   const lastRow = sheet.getLastRow();

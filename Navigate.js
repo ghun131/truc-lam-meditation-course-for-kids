@@ -1,4 +1,8 @@
-function getSavedData(savedData) {
+function getSavedData(sheet) {
+  const savedData = sheet
+    .getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn())
+    .getValues();
+
   const result = new Map([
     ["totalSeats", [savedData[0][1], 0]], // Số ghế trên xe
     ["xCount", [savedData[4][1], 4]], // STT xe đoàn hiện tại
