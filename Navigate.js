@@ -74,6 +74,10 @@ function getHeadersIndices(headerData) {
     if (header === "generated document link") {
       result.set("genDocFile", i);
     }
+
+    if (header === "note") {
+      result.set("note", i);
+    }
   }
 
   return result;

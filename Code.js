@@ -347,3 +347,84 @@ function execSendMail() {
     }
   }
 }
+
+/**
+ * Initialize the "Danh sách gửi mail" sheet with required columns
+ */
+function initDanhSachGuiMailSheet() {
+  const spreadsheetId = getSheetId();
+  const ss = SpreadsheetApp.openById(spreadsheetId);
+  let sheet = ss.getSheetByName("Danh sách gửi mail");
+  
+  // If sheet doesn't exist, create it and clone data from form responses
+  if (!sheet) {
+    const sourceSheet = ss.getSheetByName("Câu trả lời biểu mẫu 1");
+    if (!sourceSheet) {
+      throw new Error("Không tìm thấy sheet 'Câu trả lời biểu mẫu 1' để sao chép dữ liệu!");
+    }
+    
+    // Create new sheet
+    sheet = ss.insertSheet("Danh sách gửi mail");
+    
+    // Clone data using the separate function
+    cloneSheetData(sourceSheet, sheet);
+  }
+  
+  // Define the required columns
+  const columns = [
+    "Số thứ tự",
+    "Đã đánh số thứ tự", 
+    "Đã tạo đơn đăng ký",
+    "Generated Document Link",
+    "Đã chuyển khoản",
+    "Đã gửi mail đăng ký thành công",
+    "Thông báo",
+    "Note"
+  ];
+  
+  // Get current headers
+  const lastColumn = sheet.getLastColumn();
+  let currentHeaders = [];
+  if (lastColumn > 0) {
+    currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  }
+  
+  // Find the starting column for new headers (after existing ones)
+  const startColumn = lastColumn + 1;
+  
+  // Add missing columns
+  const headersToAdd = [];
+  for (let i = 0; i < columns.length; i++) {
+    const column = columns[i];
+    // Check if column already exists (case-insensitive)
+    const exists = currentHeaders.some(header => 
+      header && header.toString().toLowerCase() === column.toLowerCase()
+    );
+    
+    if (!exists) {
+      headersToAdd.push(column);
+    }
+  }
+  
+  // Add the new headers
+  if (headersToAdd.length > 0) {
+    const headerRange = sheet.getRange(1, startColumn, 1, headersToAdd.length);
+    headerRange.setValues([headersToAdd]);
+    
+    // Format the header row
+    headerRange.setFontWeight("bold");
+    headerRange.setBackground("#e6f3ff");
+    headerRange.setBorder(true, true, true, true, true, true);
+    
+    // Auto-resize columns to fit content
+    for (let i = 0; i < headersToAdd.length; i++) {
+      sheet.autoResizeColumn(startColumn + i);
+    }
+    
+    console.log(`Added ${headersToAdd.length} new columns: ${headersToAdd.join(", ")}`);
+  } else {
+    console.log("All required columns already exist in the sheet.");
+  }
+  
+  return sheet;
+}
