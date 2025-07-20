@@ -1,6 +1,81 @@
+/**
+ * Initialize the "Danh sách gửi mail" sheet with required columns
+ */
+function initDanhSachGuiMailSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Danh sách gửi mail");
+
+  const sourceSheet = ss.getSheetByName("Câu trả lời biểu mẫu 1");
+  if (!sourceSheet) {
+    throw new Error(
+      "Không tìm thấy sheet 'Câu trả lời biểu mẫu 1' để sao chép dữ liệu!"
+    );
+  }
+
+  if (sheet) {
+    sheet.activate();
+    ss.deleteActiveSheet();
+  }
+  sheet = ss.insertSheet("Danh sách gửi mail");
+
+  cloneSheetData(sourceSheet, sheet);
+
+  const columns = [
+    "Số thứ tự",
+    "Đã đánh số thứ tự",
+    "Đã tạo đơn đăng ký",
+    "Generated Document Link",
+    "Đã chuyển khoản",
+    "Đã gửi mail đăng ký thành công",
+    "Thông báo",
+    "Note",
+  ];
+
+  const lastColumn = sheet.getLastColumn();
+  let currentHeaders = [];
+  if (lastColumn > 0) {
+    currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  }
+
+  const startColumn = lastColumn + 1;
+
+  const headersToAdd = [];
+  for (let i = 0; i < columns.length; i++) {
+    const column = columns[i];
+    const exists = currentHeaders.some(
+      (header) =>
+        header && header.toString().toLowerCase() === column.toLowerCase()
+    );
+
+    if (!exists) {
+      headersToAdd.push(column);
+    }
+  }
+
+  if (headersToAdd.length > 0) {
+    const headerRange = sheet.getRange(1, startColumn, 1, headersToAdd.length);
+    headerRange.setValues([headersToAdd]);
+
+    headerRange.setFontWeight("bold");
+    headerRange.setBackground("#e6f3ff");
+    headerRange.setBorder(true, true, true, true, true, true);
+
+    for (let i = 0; i < headersToAdd.length; i++) {
+      sheet.autoResizeColumn(startColumn + i);
+    }
+
+    console.log(
+      `Added ${headersToAdd.length} new columns: ${headersToAdd.join(", ")}`
+    );
+  } else {
+    console.log("All required columns already exist in the sheet.");
+  }
+
+  return sheet;
+}
+
 function execMarkStudentCode() {
-  const spreadsheetId = getSheetId();
-  const ss = SpreadsheetApp.openById(spreadsheetId);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName("Lưu trữ");
   const mainSheet = ss.getSheetByName("Danh sách gửi mail");
   const mLastRow = mainSheet.getLastRow();
@@ -20,7 +95,7 @@ function execMarkStudentCode() {
     .getRange(1, vehicleIdx + 1, mLastRow, 1)
     .getValues();
 
-  const savedMap = getSavedData(mainSheet);
+  const savedMap = getSavedData(sheet);
 
   const [tCountStr, tCountIdx] = savedMap.get("tCount");
   const [xCountStr, xCountIdx] = savedMap.get("xCount");
@@ -90,8 +165,7 @@ function onOpen() {
 }
 
 function execGenerateDocuments() {
-  const spreadsheetId = getSheetId();
-  const ss = SpreadsheetApp.openById(spreadsheetId);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
   const savingSheet = ss.getSheetByName("Lưu trữ");
   const savedValue = getSavedData(savingSheet);
@@ -239,8 +313,7 @@ function execGenerateDocuments() {
 }
 
 function execSendMail() {
-  const spreadsheetId = getSheetId();
-  const ss = SpreadsheetApp.openById(spreadsheetId);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName("Danh sách gửi mail");
   const savingSheet = ss.getSheetByName("Lưu trữ");
   const savedValue = getSavedData(savingSheet);
@@ -349,83 +422,446 @@ function execSendMail() {
   }
 }
 
+// ------------ EMAIL TEMPLATE FUNCTIONS ------------
+
+function createSuccessVerificationOwnVehicleMail(input) {
+  const {
+    docLink,
+    howToStayLink,
+    currentYear = new Date().getFullYear(),
+    gender = "Nữ",
+    ageRange = "2008-2010",
+    zaloLink = "https://zalo.me/g/damelp785",
+    firstContactName = "Phật tử Diệu Từ",
+    firstContactPhone = "0988 237 713",
+    secondContactName = "Phật tử Chân Mỹ Nghiêm",
+    secondContactPhone = "0848 349 129",
+    gatheringTimeRange = "7h30 - 9h30",
+    gatheringDate = "5/7/2025",
+    endTime = "16h30",
+    endDate = "8/7/2025",
+  } = input;
+  return {
+    subject: `Khóa tu mùa hè ${currentYear} tại Thiền viện Trúc Lâm Tây Thiên [Khoá ${ageRange}/${gender}]`,
+    content: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Xác nhận Đăng ký Khóa tu mùa hè Thiền viện Trúc Lâm Tây Thiên</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          }
+          /* Removed specific color for headings to keep default size/style */
+          /* h1, h2, h3 {
+            color: #0056b3;
+          } */
+          ul {
+            list-style-type: disc;
+            margin-left: 10px;
+          }
+          li {
+            margin-bottom: 10px;
+          }
+          a {
+            color: #007bff;
+            text-decoration: none;
+          }
+          a:hover {
+            text-decoration: underline;
+          }
+          .important-note {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 10px 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            color: #664d03;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+            font-size: 0.9em;
+            color: #777777;
+          }
+        </style>
+        </head>
+        <body>
+          <div class="container">
+            <p>Kính chào quý Phụ huynh và các bạn thiền sinh,</p>
+  
+            <p>Đoàn Thanh Thiếu Niên Phật Tử Trúc Lâm Tây Thiên - Trân Nhân Tông xác nhận bạn đã <strong>đăng ký thành công</strong> tham gia Khóa tu mùa hè khóa 4 tại Thiền viện Trúc Lâm Tây Thiên.</p>
+  
+            <p>---</p>
+  
+            <h2>1. THÔNG TIN TẬP TRUNG VÀ DI CHUYỂN</h2>
+  
+            <h3>Đối với thiền sinh tự túc di chuyển lên thiền viện:</h3>
+            <ul>
+              <li><strong>Thời gian tập trung:</strong> từ ${gatheringTimeRange} sáng ngày ${gatheringDate}</li>
+              <li><strong>Địa điểm:</strong> tại giảng đường A thiền viện</li>
+            </ul>
+  
+            <p>---</p>
+  
+            <h2>2. THỜI GIAN KẾT THÚC KHÓA TU:</h2>
+            <ul>
+              <li>${endTime} ngày ${endDate} sẽ kết thúc lễ bế giảng</li>
+              <li>Với thiền sinh tự túc phương tiện, quý phụ huynh đón con tại thiền viện sau ${endTime}</li>
+            </ul>
+  
+            <p>---</p>
+  
+            <h2>3. CHUẨN BỊ HỒ SƠ:</h2>
+            <ul>
+              <li>Đơn đăng ký có chữ ký xác nhận của thiền sinh và phụ huynh. <a href="${docLink}" target="_blank">Link in đơn</a></li>
+              <li>Bản photo căn cước công dân hoặc giấy khai sinh bản sao</li>
+              <li>2 ảnh 3 x 4 của thiền sinh</li>
+            </ul>
+  
+            <p>---</p>
+  
+            <h2>4. ĐĂNG KÝ LƯU TRÚ</h2>
+            <p>Phụ huynh truy cập cổng điện tử <strong>VNeID</strong> để đăng ký tạm trú cho thiền sinh tại thiền viện trong thời gian diễn ra khóa tu. (Từ 0h00 ngày 05/7/2025)</p>
+            <p><a href="${howToStayLink}" target="_blank">Video hướng dẫn cách đăng ký tạm trú</a></p>
+            <p><strong>Nhóm Zalo Thiền sinh:</strong> <a href="${zaloLink}" target="_blank">${zaloLink}</a></p>
+  
+            <p>---</p>
+  
+            <h2>5. LƯU Ý</h2>
+            <div class="important-note">
+              <ul>
+                <li>Khi có việc đột xuất không tham gia được khóa tu, mong bạn báo lại sớm để Ban tổ chức có thể kịp thời sắp xếp.</li>
+                <li>Tịnh tài cúng dường là <strong>TÙY HỶ</strong> để tạo phước đức cho bản thân và trợ duyên cho Thiền Viện chi phí tổ chức khóa tu. Có thể cúng dường trực tiếp tại hòm công đức tại Thiền viện.</li>
+              </ul>
+            </div>
+  
+            <p>Mọi thông tin vui lòng liên hệ:</p>
+            <ul>
+              <li>1. ${firstContactName}: <strong>${firstContactPhone}</strong> (Thảo Mẫn);</li>
+              <li>2. ${secondContactName}: <strong>${secondContactPhone}</strong></li>
+            </ul>
+  
+            <p>Hẹn gặp quý phụ huynh và các bạn thiền sinh trong Khóa tu mùa hè ${currentYear}!</p>
+  
+            <p>Chúc quý vị một ngày an vui!</p>
+  
+            <p>Trân Trọng,</p>
+            <p><strong>Đoàn Thanh Thiếu Niên Phật Tử Trúc Lâm Tây Thiên.</strong></p>
+          </div>
+        </body>
+        </html>
+      `,
+  };
+}
+
+function createSuccessVerificationByBusMail(input) {
+  const {
+    docLink,
+    howToStayLink,
+    currentYear = new Date().getFullYear(),
+    gender = "Nữ",
+    ageRange = "2008-2010",
+    zaloLink = "https://zalo.me/g/damelp785",
+    firstContactName = "Phật tử Diệu Từ",
+    firstContactPhone = "0988 237 713",
+    secondContactName = "Phật tử Chân Mỹ Nghiêm",
+    secondContactPhone = "0848 349 129",
+    gatheringTimeRange = "7h30 - 9h30",
+    gatheringDate = "5/7/2025",
+    endTime = "16h30",
+    endDate = "8/7/2025",
+  } = input;
+  return {
+    subject: `Khóa tu mùa hè ${currentYear} tại Thiền viện Trúc Lâm Tây Thiên [Khoá ${ageRange}/${gender}]`,
+    content: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Xác nhận Đăng ký Khóa tu mùa hè Thiền viện Trúc Lâm Tây Thiên</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          }
+          /* Removed specific color for headings to keep default size/style */
+          /* h1, h2, h3 {
+            color: #0056b3;
+          } */
+          ul {
+            list-style-type: disc;
+            margin-left: 10px;
+          }
+          li {
+            margin-bottom: 10px;
+          }
+          a {
+            color: #007bff;
+            text-decoration: none;
+          }
+          a:hover {
+            text-decoration: underline;
+          }
+          .important-note {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 10px 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            color: #664d03;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+            font-size: 0.9em;
+            color: #777777;
+          }
+        </style>
+        </head>
+        <body>
+          <div class="container">
+            <p>Kính chào quý Phụ huynh và các bạn thiền sinh,</p>
+  
+            <p>Đoàn Thanh Thiếu Niên Phật Tử Trúc Lâm Tây Thiên - Trân Nhân Tông xác nhận bạn đã <strong>đăng ký thành công</strong> tham gia Khóa tu mùa hè khóa 4 tại Thiền viện Trúc Lâm Tây Thiên.</p>
+  
+            <p>---</p>
+  
+            <h2>1. THÔNG TIN TẬP TRUNG VÀ DI CHUYỂN</h2>
+  
+            <h3>Đối với thiền sinh đi xe theo Đoàn từ Hà Nội:</h3>
+            <ul>
+              <li><strong>Thời gian tập trung:</strong> ${gatheringTimeRange} sáng ngày ${gatheringDate}</li>
+              <li><strong>Địa điểm:</strong> cổng Đông Công viên Hòa Bình, đường Đỗ Nhuận, Bắc Từ Liêm, Hà Nội (Đối diện bệnh viện Mặt Trời - SunGroup). <a href="https://www.google.com/maps/search/?api=1&query=c%E1%BB%95ng+%C4%90%C3%B4ng+C%C3%B4ng+vi%C3%AAn+H%C3%B2a+B%C3%ACnh,+%C4%91%C6%B0%E1%BB%9Dng+%C4%90%E1%BB%97+Nhu%E1%BA%ADn,+B%E1%BA%AFc+T%E1%BB%AB+Li%C3%AAm,+H%C3%A0+N%E1%BB%99i" target="_blank">Định vị Google Maps</a></li>
+              <li>Thiền sinh hoàn hỉ di chuyển tới địa điểm tập trung sớm hơn để tránh rơi vào tình trạng ùn tắc. Đoàn sẽ xuất phát theo đúng lịch trình và không chờ những trường hợp tới muộn.</li>
+            </ul>
+            <p>---</p>
+            <h2>2. THỜI GIAN KẾT THÚC KHÓA TU:</h2>
+            <ul>
+              <li>${endTime} ngày ${endDate} sẽ kết thúc lễ bế giảng</li>
+              <li>Với thiền sinh đi xe Đoàn, sẽ cập nhật giờ đón tại Hà Nội trong nhóm phụ huynh</li>
+            </ul>
+  
+            <p>---</p>
+  
+            <h2>3. CHUẨN BỊ HỒ SƠ:</h2>
+            <ul>
+              <li>Đơn đăng ký có chữ ký xác nhận của thiền sinh và phụ huynh. <a href="${docLink}" target="_blank">Link in đơn</a></li>
+              <li>Bản photo căn cước công dân hoặc giấy khai sinh bản sao</li>
+              <li>2 ảnh 3 x 4 của thiền sinh</li>
+            </ul>
+  
+            <p>---</p>
+  
+            <h2>4. ĐĂNG KÝ LƯU TRÚ</h2>
+            <p>Phụ huynh truy cập cổng điện tử <strong>VNeID</strong> để đăng ký tạm trú cho thiền sinh tại thiền viện trong thời gian diễn ra khóa tu. (Từ 0h00 ngày 05/7/2025)</p>
+            <p><a href="${howToStayLink}" target="_blank">Video hướng dẫn cách đăng ký tạm trú</a></p>
+            <p><strong>Nhóm Zalo Thiền sinh:</strong> <a href="${zaloLink}" target="_blank">${zaloLink}</a></p>
+  
+            <p>---</p>
+  
+            <h2>5. LƯU Ý</h2>
+            <div class="important-note">
+              <ul>
+                <li>Khi có việc đột xuất không tham gia được khóa tu, mong bạn báo lại sớm để Ban tổ chức có thể kịp thời sắp xếp.</li>
+                <li>Tịnh tài cúng dường là <strong>TÙY HỶ</strong> để tạo phước đức cho bản thân và trợ duyên cho Thiền Viện chi phí tổ chức khóa tu. Có thể cúng dường trực tiếp tại hòm công đức tại Thiền viện.</li>
+              </ul>
+            </div>
+  
+            <p>Mọi thông tin vui lòng liên hệ:</p>
+            <ul>
+              <li>1. ${firstContactName}: <strong>${firstContactPhone}</strong> (Thảo Mẫn);</li>
+              <li>2. ${secondContactName}: <strong>${secondContactPhone}</strong></li>
+            </ul>
+  
+            <p>Hẹn gặp quý phụ huynh và các bạn thiền sinh trong Khóa tu mùa hè ${currentYear}!</p>
+  
+            <p>Chúc quý vị một ngày an vui!</p>
+  
+            <p>Trân Trọng,</p>
+            <p><strong>Đoàn Thanh Thiếu Niên Phật Tử Trúc Lâm Tây Thiên.</strong></p>
+          </div>
+        </body>
+        </html>
+      `,
+  };
+}
+
+// ------------ UTILITY FUNCTIONS ------------
+
 /**
- * Initialize the "Danh sách gửi mail" sheet with required columns
+ * Helper function to extract the ID from a Google Drive/Docs URL.
+ * @param {string} url The URL of the Google Doc or Google Drive folder.
+ * @return {string|null} The ID of the document/folder, or null if not found.
  */
-function initDanhSachGuiMailSheet() {
-  const spreadsheetId = getSheetId();
-  const ss = SpreadsheetApp.openById(spreadsheetId);
-  let sheet = ss.getSheetByName("Danh sách gửi mail");
-  
-  // If sheet doesn't exist, create it and clone data from form responses
-  if (!sheet) {
-    const sourceSheet = ss.getSheetByName("Câu trả lời biểu mẫu 1");
-    if (!sourceSheet) {
-      throw new Error("Không tìm thấy sheet 'Câu trả lời biểu mẫu 1' để sao chép dữ liệu!");
-    }
-    
-    // Create new sheet
-    sheet = ss.insertSheet("Danh sách gửi mail");
-    
-    // Clone data using the separate function
-    cloneSheetData(sourceSheet, sheet);
-  }
-  
-  // Define the required columns
-  const columns = [
-    "Số thứ tự",
-    "Đã đánh số thứ tự", 
-    "Đã tạo đơn đăng ký",
-    "Generated Document Link",
-    "Đã chuyển khoản",
-    "Đã gửi mail đăng ký thành công",
-    "Thông báo",
-    "Note"
-  ];
-  
-  // Get current headers
-  const lastColumn = sheet.getLastColumn();
-  let currentHeaders = [];
-  if (lastColumn > 0) {
-    currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
-  }
-  
-  // Find the starting column for new headers (after existing ones)
-  const startColumn = lastColumn + 1;
-  
-  // Add missing columns
-  const headersToAdd = [];
-  for (let i = 0; i < columns.length; i++) {
-    const column = columns[i];
-    // Check if column already exists (case-insensitive)
-    const exists = currentHeaders.some(header => 
-      header && header.toString().toLowerCase() === column.toLowerCase()
+function extractIdFromUrl(url) {
+  const match = url.match(/[-\w]{25,}/); // Regex to find Google Drive/Docs IDs
+  return match ? match[0] : null;
+}
+
+function setRowBackgroundColor(sheet, color, row) {
+  const rowRange = sheet.getRange(row + 1, 1, 1, sheet.getLastColumn());
+  rowRange.setBackground(color);
+}
+
+/**
+ * Clone all data and formatting from source sheet to target sheet
+ * @param {Sheet} sourceSheet - The sheet to copy data from
+ * @param {Sheet} targetSheet - The sheet to copy data to
+ */
+function cloneSheetData(sourceSheet, targetSheet) {
+  // Clone all data from source sheet
+  const sourceRange = sourceSheet.getDataRange();
+  if (sourceRange.getNumRows() > 0) {
+    const sourceData = sourceRange.getValues();
+    const targetRange = targetSheet.getRange(
+      1,
+      1,
+      sourceData.length,
+      sourceData[0].length
     );
-    
-    if (!exists) {
-      headersToAdd.push(column);
+    targetRange.setValues(sourceData);
+
+    // Copy formatting from first row (headers)
+    const sourceHeaderRange = sourceSheet.getRange(
+      1,
+      1,
+      1,
+      sourceData[0].length
+    );
+    const targetHeaderRange = targetSheet.getRange(
+      1,
+      1,
+      1,
+      sourceData[0].length
+    );
+    sourceHeaderRange.copyTo(targetHeaderRange);
+
+    console.log(
+      `Đã sao chép ${
+        sourceData.length
+      } hàng từ "${sourceSheet.getName()}" sang "${targetSheet.getName()}"`
+    );
+    return sourceData.length;
+  }
+  return 0;
+}
+
+// ------------ NAVIGATE FUNCTIONS ------------
+
+function getSavedData(sheet) {
+  const savedData = sheet
+    .getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn())
+    .getValues();
+
+  const result = new Map([
+    ["totalSeats", [savedData[0][1], 0]], // Số ghế trên xe
+    ["xCount", [savedData[4][1], 4]], // STT xe đoàn hiện tại
+    ["tCount", [savedData[2][1], 2]], // STT tự túc hiện tại
+    ["xGroup", [savedData[3][1], 3]], // Nhóm xe đoàn
+    ["tGroup", [savedData[1][1], 1]], // Nhóm tự túc
+    ["templateLink", [savedData[5][1], 5]], // Đường link file doc mẫu đăng ký
+    ["folderLink", [savedData[6][1], 6]], // Đường link folder lưu đơn đăng ký
+    ["howToStayLink", [savedData[7][1], 7]], // Hướng dẫn lưu trú
+  ]);
+
+  return result;
+}
+
+function getHeadersIndices(headerData) {
+  const result = new Map();
+
+  for (let i = 0; i < headerData.length; i++) {
+    const header = headerData[i].toLowerCase();
+
+    if (
+      ["phương tiện", "cách thức", "hình thức"].some((val) =>
+        header.includes(val)
+      ) &&
+      (header.includes("di chuyển") || header.includes("đi lại"))
+    ) {
+      result.set("vehicle", i);
+    }
+
+    if (header.includes("email")) {
+      const currValue = result.get("email") || [];
+      currValue.length > 0
+        ? result.set("email", [i, ...currValue])
+        : result.set("email", [i]);
+    }
+
+    if (header === "số thứ tự") {
+      result.set("stt", i);
+    }
+
+    if (header === "đã đánh số thứ tự") {
+      result.set("sttMarkedIdx", i);
+    }
+
+    if (header === "đã tạo đơn đăng ký") {
+      result.set("docCreateIdx", i);
+    }
+
+    if (header === "họ tên thiền sinh") {
+      result.set("studentIdx", i);
+    }
+
+    if (header.includes("đăng ký thành công")) {
+      result.set("confirmMailSent", i);
+    }
+
+    if (header === "thông báo") {
+      result.set("report", i);
+    }
+
+    if (
+      header.includes("chuyển khoản") ||
+      header.includes("thanh toán") ||
+      header.includes("trả tiền")
+    ) {
+      result.set("payment", i);
+    }
+
+    if (header === "generated document link") {
+      result.set("genDocFile", i);
+    }
+
+    if (header === "note") {
+      result.set("note", i);
     }
   }
-  
-  // Add the new headers
-  if (headersToAdd.length > 0) {
-    const headerRange = sheet.getRange(1, startColumn, 1, headersToAdd.length);
-    headerRange.setValues([headersToAdd]);
-    
-    // Format the header row
-    headerRange.setFontWeight("bold");
-    headerRange.setBackground("#e6f3ff");
-    headerRange.setBorder(true, true, true, true, true, true);
-    
-    // Auto-resize columns to fit content
-    for (let i = 0; i < headersToAdd.length; i++) {
-      sheet.autoResizeColumn(startColumn + i);
-    }
-    
-    console.log(`Added ${headersToAdd.length} new columns: ${headersToAdd.join(", ")}`);
-  } else {
-    console.log("All required columns already exist in the sheet.");
-  }
-  
-  return sheet;
+
+  return result;
 }
