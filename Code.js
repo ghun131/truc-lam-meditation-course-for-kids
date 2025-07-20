@@ -85,6 +85,7 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu("Tạo văn bản")
     .addItem("Bắt đầu", "execGenerateDocuments")
+    .addItem("Thiết lập tất cả", "initDanhSachGuiMailSheet")
     .addToUi();
 }
 
