@@ -3,7 +3,7 @@
  */
 function initDanhSachGuiMailSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("Danh sách gửi mail");
+  let sheet = ss.getSheetByName("Danh sách gửi mail");
 
   const sourceSheet = ss.getSheetByName("Câu trả lời biểu mẫu 1");
   if (!sourceSheet) {
@@ -55,7 +55,8 @@ function initDanhSachGuiMailSheet() {
     headerRange.setValues([headersToAdd]);
 
     headerRange.setFontWeight("bold");
-    headerRange.setBackground("#e6f3ff");
+    headerRange.setFontColor("white");
+    headerRange.setBackground("#5b3f86");
     headerRange.setBorder(true, true, true, true, true, true);
 
     for (let i = 0; i < headersToAdd.length; i++) {
@@ -163,10 +164,10 @@ function execMarkStudentCode() {
 
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu("Tạo văn bản")
-    .addItem("Bắt đầu", "execGenerateDocuments")
-    .addItem("Khơi tạo danh sách gửi mail", "initDanhSachGuiMailSheet")
-    .addItem("Đồng bộ danh sách gửi mail", "syncDanhSachGuiMailSheet")
+  ui.createMenu("Khoá tu")
+    .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
+    .addItem("Tạo danh sách gửi mail", "initDanhSachGuiMailSheet")
+    .addItem("Sync danh sách gửi mail", "syncDanhSachGuiMailSheet")
     .addToUi();
 }
 
@@ -324,6 +325,18 @@ function execSendMail() {
   const savingSheet = ss.getSheetByName("Lưu trữ");
   const savedValue = getSavedData(savingSheet);
   const [howToStayLink] = savedValue.get("howToStayLink");
+  const [currentYear] = savedValue.get("currentYear");
+  const [gender] = savedValue.get("gender");
+  const [ageRange] = savedValue.get("ageRange");
+  const [zaloLink] = savedValue.get("zaloLink");
+  const [firstContactName] = savedValue.get("firstContactName");
+  const [firstContactPhone] = savedValue.get("firstContactPhone");
+  const [secondContactName] = savedValue.get("secondContactName");
+  const [secondContactPhone] = savedValue.get("secondContactPhone");
+  const [gatheringTimeRange] = savedValue.get("gatheringTimeRange");
+  const [gatheringDate] = savedValue.get("gatheringDate");
+  const [endTime] = savedValue.get("endTime");
+  const [endDate] = savedValue.get("endDate");
 
   const lastRow = sheet.getLastRow();
   const lastColumn = sheet.getLastColumn();
@@ -377,12 +390,27 @@ function execSendMail() {
     }
 
     const docLink = rowData[genDocFileIdx];
-    const successVerificationByBusMail = createSuccessVerificationByBusMail({
+    const mailObj = {
       docLink,
       howToStayLink,
-    });
+      currentYear,
+      gender,
+      ageRange,
+      zaloLink,
+      firstContactName,
+      firstContactPhone,
+      secondContactName,
+      secondContactPhone,
+      gatheringTimeRange,
+      gatheringDate: formatDate(gatheringDate),
+      endTime,
+      endDate: formatDate(endDate),
+    };
+
+    const successVerificationByBusMail =
+      createSuccessVerificationByBusMail(mailObj);
     const successVerificationOwnVehicleMail =
-      createSuccessVerificationOwnVehicleMail({ docLink, howToStayLink });
+      createSuccessVerificationOwnVehicleMail(mailObj);
 
     if (confirmMailSent !== "x" && paidBusFee === "x") {
       if (!docLink) {
@@ -708,7 +736,7 @@ function createSuccessVerificationByBusMail(input) {
   
             <p>Mọi thông tin vui lòng liên hệ:</p>
             <ul>
-              <li>1. ${firstContactName}: <strong>${firstContactPhone}</strong> (Thảo Mẫn);</li>
+              <li>1. ${firstContactName}: <strong>${firstContactPhone}</strong></li>
               <li>2. ${secondContactName}: <strong>${secondContactPhone}</strong></li>
             </ul>
   
@@ -785,6 +813,12 @@ function cloneSheetData(sourceSheet, targetSheet) {
   return 0;
 }
 
+function formatDate(date) {
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // +1 because months are 0-indexed
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 // ------------ NAVIGATE FUNCTIONS ------------
 
 function getSavedData(sheet) {
@@ -801,6 +835,18 @@ function getSavedData(sheet) {
     ["templateLink", [savedData[5][1], 5]], // Đường link file doc mẫu đăng ký
     ["folderLink", [savedData[6][1], 6]], // Đường link folder lưu đơn đăng ký
     ["howToStayLink", [savedData[7][1], 7]], // Hướng dẫn lưu trú
+    ["currentYear", [savedData[8][1], 8]], // Năm hiện tại
+    ["gender", [savedData[9][1], 9]], // Giới tính
+    ["ageRange", [savedData[10][1], 10]], // Năm sinh
+    ["zaloLink", [savedData[11][1], 11]], // Nhóm Zalo
+    ["firstContactName", [savedData[12][1], 12]], // Tên người liên hệ 1
+    ["firstContactPhone", [savedData[13][1], 13]], // Số điện thoại 1
+    ["secondContactName", [savedData[14][1], 14]], // Tên người liên hệ 2
+    ["secondContactPhone", [savedData[15][1], 15]], // Số điện thoại 2
+    ["gatheringTimeRange", [savedData[16][1], 16]], // Thời gian tập trung
+    ["gatheringDate", [savedData[17][1], 17]], // Ngày tập trung
+    ["endTime", [savedData[18][1], 18]], // Giờ kết khoá tu
+    ["endDate", [savedData[19][1], 19]], // Ngày kết khoá tu
   ]);
 
   return result;
