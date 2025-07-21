@@ -3,7 +3,7 @@
  */
 function initDanhSachGuiMailSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName("Danh sách gửi mail");
+  const sheet = ss.getSheetByName("Danh sách gửi mail");
 
   const sourceSheet = ss.getSheetByName("Câu trả lời biểu mẫu 1");
   if (!sourceSheet) {
@@ -12,11 +12,9 @@ function initDanhSachGuiMailSheet() {
     );
   }
 
-  if (sheet) {
-    sheet.activate();
-    ss.deleteActiveSheet();
+  if (!sheet) {
+    sheet = ss.insertSheet("Danh sách gửi mail");
   }
-  sheet = ss.insertSheet("Danh sách gửi mail");
 
   cloneSheetData(sourceSheet, sheet);
 
@@ -72,6 +70,13 @@ function initDanhSachGuiMailSheet() {
   }
 
   return sheet;
+}
+
+function syncDanhSachGuiMailSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Danh sách gửi mail");
+  const sourceSheet = ss.getSheetByName("Câu trả lời biểu mẫu 1");
+  cloneSheetData(sourceSheet, sheet);
 }
 
 function execMarkStudentCode() {
@@ -160,7 +165,8 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu("Tạo văn bản")
     .addItem("Bắt đầu", "execGenerateDocuments")
-    .addItem("Thiết lập tất cả", "initDanhSachGuiMailSheet")
+    .addItem("Khơi tạo danh sách gửi mail", "initDanhSachGuiMailSheet")
+    .addItem("Đồng bộ danh sách gửi mail", "syncDanhSachGuiMailSheet")
     .addToUi();
 }
 
