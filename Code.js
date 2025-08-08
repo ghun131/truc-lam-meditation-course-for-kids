@@ -1,6 +1,15 @@
-/**
- * Initialize the "Danh sách gửi mail" sheet with required columns
- */
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu("Khoá tu")
+    .addItem("Tạo danh sách gửi mail", "initDanhSachGuiMailSheet")
+    .addItem("Sync danh sách gửi mail", "syncDanhSachGuiMailSheet")
+    .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
+    .addItem("Đánh số thứ tự", "execMarkStudentCode")
+    .addItem("Lọc trùng thiền sinh", "filterDuplicate")
+    .addToUi();
+}
+
+// ------------ CREATE MENU FUNCTIONS ------------
 function initDanhSachGuiMailSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName("Danh sách gửi mail");
@@ -127,6 +136,61 @@ function syncDanhSachGuiMailSheet() {
   cloneSheetData(sourceSheet, sheet);
 }
 
+function filterDuplicate() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Danh sách gửi mail");
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  const data = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+
+  const hIndice = getHeadersIndices(data[0]);
+
+  const emailIdx = hIndice.get("email");
+  const nameIdx = hIndice.get("studentIdx");
+  const dobIdx = hIndice.get("dateOfBirth");
+  const reportIdx = hIndice.get("report");
+
+  let cache = {};
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const email = row[emailIdx];
+    const name = row[nameIdx];
+    const dob = row[dobIdx];
+    const studentObj = { idx: i, email, name, dob };
+    if (Array.isArray(cache[email])) {
+      cache[email].push(studentObj);
+    } else {
+      cache[email] = [studentObj];
+    }
+  }
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const email = row[emailIdx];
+    const name = row[nameIdx];
+    const dob = row[dobIdx];
+
+    if (cache[email] && cache[email].length > 0) {
+      for (const item of cache[email]) {
+        if (
+          item.name + item.dob.toString() === name + dob.toString() &&
+          i !== item.idx
+        ) {
+          setRowBackgroundColor(sheet, "#ffdddd", item.idx);
+          sheet
+            .getRange(i + 1, reportIdx + 1)
+            .setValue(`Trùng với ${item.name}`);
+
+          console.log(`Dòng ${i + 1} trùng bạn ${item.name}, email: ${email}`);
+        }
+      }
+    }
+  }
+}
+
+// ------------ MAIN TASKS EXECUTION FUNCTIONS ------------
+
 function execMarkStudentCode() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName("Lưu trữ");
@@ -207,16 +271,6 @@ function execMarkStudentCode() {
   sheet.getRange(xCountIdx + 1, 2, 1, 1).setValue(xCount);
   sheet.getRange(tGroupIdx + 1, 2, 1, 1).setValue(tGroup);
   sheet.getRange(xGroupIdx + 1, 2, 1, 1).setValue(xGroup);
-}
-
-function onOpen() {
-  const ui = SpreadsheetApp.getUi();
-  ui.createMenu("Khoá tu")
-    .addItem("Tạo danh sách gửi mail", "initDanhSachGuiMailSheet")
-    .addItem("Sync danh sách gửi mail", "syncDanhSachGuiMailSheet")
-    .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
-    .addItem("Đánh số thứ tự", "execMarkStudentCode")
-    .addToUi();
 }
 
 function execGenerateDocuments() {
@@ -960,8 +1014,12 @@ function getHeadersIndices(headerData) {
       result.set("genDocFile", i);
     }
 
-    if (header === "note") {
+    if (header === "ghi chú") {
       result.set("note", i);
+    }
+
+    if (header === "ngày tháng năm sinh") {
+      result.set("dateOfBirth", i);
     }
   }
 
