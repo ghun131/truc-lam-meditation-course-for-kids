@@ -3,9 +3,9 @@ function onOpen() {
   ui.createMenu("Khoá tu")
     .addItem("Tạo danh sách gửi mail", "initDanhSachGuiMailSheet")
     .addItem("Sync danh sách gửi mail", "syncDanhSachGuiMailSheet")
-    .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
     .addItem("Đánh số thứ tự", "execMarkStudentCode")
     .addItem("Lọc trùng thiền sinh", "filterDuplicate")
+    .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
     .addToUi();
 }
 
@@ -149,6 +149,9 @@ function filterDuplicate() {
   const nameIdx = hIndice.get("studentIdx");
   const dobIdx = hIndice.get("dateOfBirth");
   const reportIdx = hIndice.get("report");
+  const markedIdx = hIndice.get("sttMarkedIdx");
+  const confirmMailSentIdx = hIndice.get("confirmMailSent");
+  const docCreatedIdx = hIndice.get("docCreateIdx");
 
   let cache = {};
 
@@ -159,7 +162,9 @@ function filterDuplicate() {
     const dob = row[dobIdx];
     const studentObj = { idx: i, email, name, dob };
     if (Array.isArray(cache[email])) {
-      cache[email].push(studentObj);
+      cache[email].every(
+        (item) => `${item.name}${item.dob}` !== `${name}{dob}`
+      ) && cache[email].push(studentObj);
     } else {
       cache[email] = [studentObj];
     }
@@ -175,12 +180,18 @@ function filterDuplicate() {
       for (const item of cache[email]) {
         if (
           item.name + item.dob.toString() === name + dob.toString() &&
-          i !== item.idx
+          i < item.idx
         ) {
-          setRowBackgroundColor(sheet, "#ffdddd", item.idx);
+          setRowBackgroundColor(sheet, "#F28C28", i);
           sheet
             .getRange(i + 1, reportIdx + 1)
             .setValue(`Trùng với ${item.name}`);
+          markedIdx !== undefined &&
+            sheet.getRange(i + 1, markedIdx + 1).setValue("x");
+          confirmMailSentIdx !== undefined &&
+            sheet.getRange(i + 1, confirmMailSentIdx + 1).setValue("x");
+          docCreatedIdx !== undefined &&
+            sheet.getRange(i + 1, docCreatedIdx + 1).setValue("x");
 
           console.log(`Dòng ${i + 1} trùng bạn ${item.name}, email: ${email}`);
         }
