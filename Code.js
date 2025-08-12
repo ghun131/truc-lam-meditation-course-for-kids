@@ -7,6 +7,10 @@ function onOpen() {
     .addItem("Lọc trùng thiền sinh", "filterDuplicate")
     .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
     .addToUi();
+
+    ui.createMenu("Kiểm tra nhanh")
+    .addItem("Gửi mail xác nhận toàn bộ", "execSendMail")
+    .addToUi();
 }
 
 // ------------ CREATE MENU FUNCTIONS ------------
