@@ -529,39 +529,41 @@ function execSendMail() {
     const successVerificationOwnVehicleMail =
       createSuccessVerificationOwnVehicleMail(mailObj);
 
-    if (confirmMailSent !== "x") {
-      if (!docLink) {
-        sheet
-          .getRange(row + 1, reportIdx + 1)
-          .setValue("Lỗi chưa tạo đơn file doc!");
-        continue;
-      }
-      try {
-        if (byBus && !paidBusFee) return;
-        if (byBus && paidBusFee === "x") {
-          GmailApp.sendEmail(email, successVerificationByBusMail.subject, "", {
-            htmlBody: successVerificationByBusMail.content,
-          });
-          console.log(`Sent to ${email} mail by bus`);
-        }
-        if (!byBus) {
-          GmailApp.sendEmail(
-            email,
-            successVerificationOwnVehicleMail.subject,
-            "",
-            { htmlBody: successVerificationOwnVehicleMail.content }
-          );
-          console.log(`Sent to ${email} mail own vehicle`);
-        }
+    if (confirmMailSent.includes("x")) continue;
 
-        sheet.getRange(row + 1, confirmMailSentIdx + 1).setValue("x");
-        setRowBackgroundColor(sheet, "white", row);
-        sheet.getRange(row + 1, reportIdx + 1).setValue("");
-      } catch (error) {
-        setRowBackgroundColor(sheet, "#FF8488", row);
-        sheet.getRange(row + 1, reportIdx + 1).setValue("Lỗi mail xác nhận!");
-        throw error;
+    if (!docLink) {
+      sheet
+        .getRange(row + 1, reportIdx + 1)
+        .setValue("Lỗi chưa tạo đơn file doc!");
+      continue;
+    }
+
+    try {
+      if (byBus && !paidBusFee) continue;
+
+      if (byBus && paidBusFee === "x") {
+        GmailApp.sendEmail(email, successVerificationByBusMail.subject, "", {
+          htmlBody: successVerificationByBusMail.content,
+        });
+        console.log(`Sent to ${email} mail by bus`);
       }
+      if (!byBus) {
+        GmailApp.sendEmail(
+          email,
+          successVerificationOwnVehicleMail.subject,
+          "",
+          { htmlBody: successVerificationOwnVehicleMail.content }
+        );
+        console.log(`Sent to ${email} mail own vehicle`);
+      }
+
+      sheet.getRange(row + 1, confirmMailSentIdx + 1).setValue("x");
+      setRowBackgroundColor(sheet, "white", row);
+      sheet.getRange(row + 1, reportIdx + 1).setValue("");
+    } catch (error) {
+      setRowBackgroundColor(sheet, "#FF8488", row);
+      sheet.getRange(row + 1, reportIdx + 1).setValue("Lỗi mail xác nhận!");
+      throw error;
     }
 
     // Clean up errored row has been fixed
