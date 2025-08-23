@@ -8,7 +8,7 @@ function onOpen() {
     .addItem("Tạo đơn đăng ký", "execGenerateDocuments")
     .addToUi();
 
-    ui.createMenu("Kiểm tra nhanh")
+  ui.createMenu("Chạy chủ động")
     .addItem("Gửi mail xác nhận toàn bộ", "execSendMail")
     .addToUi();
 }
@@ -179,13 +179,13 @@ function filterDuplicate() {
     const email = row[emailIdx];
     const name = row[nameIdx];
     const dob = row[dobIdx];
+    const prevId = (name + dob.toString()).toLowerCase();
 
     if (cache[email] && cache[email].length > 0) {
       for (const item of cache[email]) {
-        if (
-          item.name + item.dob.toString() === name + dob.toString() &&
-          i < item.idx
-        ) {
+        const currId = (item.name + item.dob.toString()).toLowerCase();
+
+        if (prevId === currId && i < item.idx) {
           setRowBackgroundColor(sheet, "#F28C28", i);
           sheet
             .getRange(i + 1, reportIdx + 1)
