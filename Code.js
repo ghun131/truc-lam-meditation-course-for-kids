@@ -256,7 +256,7 @@ function execMarkStudentCode() {
     const value = columnJ[i][0];
     const execStatus = columnQ[i][0];
 
-    if (execStatus === "x") {
+    if (execStatus.toLowerCase() === "x") {
       continue;
     }
 
@@ -430,8 +430,8 @@ function execGenerateDocuments() {
   } catch (e) {
     ui.alert(
       "Lỗi rồi: " +
-        e.message +
-        "\n\nVui lòng đảm bảo bạn đã cấp quyền cần thiết và URL là chính xác."
+      e.message +
+      "\n\nVui lòng đảm bảo bạn đã cấp quyền cần thiết và URL là chính xác."
     );
   }
 }
@@ -925,8 +925,7 @@ function cloneSheetData(sourceSheet, targetSheet) {
     sourceHeaderRange.copyTo(targetHeaderRange);
 
     console.log(
-      `Đã sao chép ${
-        sourceData.length
+      `Đã sao chép ${sourceData.length
       } hàng từ "${sourceSheet.getName()}" sang "${targetSheet.getName()}"`
     );
     return sourceData.length;
