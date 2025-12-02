@@ -92,33 +92,34 @@ function initLuuTruSheet(ss) {
 
   // Define the data to populate (label, value)
   const data = [
-    ["Số ghế trên xe", 18], // Row 0
-    ["Nhóm tự túc", 1], // Row 1
-    ["STT tự túc hiện tại", 0], // Row 2
-    ["Nhóm xe đoàn", 1], // Row 3
-    ["STT xe đoàn hiện tại", 0], // Row 4
-    ["Đường link file doc mẫu đăng ký", ""], // Row 5
-    ["Đường link folder lưu đơn đăng ký", ""], // Row 6
+    ["Số ghế trên xe", 18, "SO_GHE_TREN_XE"], // Row 0
+    ["Nhóm tự túc", 1, "NHOM_TU_TUC"], // Row 1
+    ["STT tự túc hiện tại", 0, "STT_TU_TUC"], // Row 2
+    ["Nhóm xe đoàn", 1, "NHOM_XE_DOAN"], // Row 3
+    ["STT xe đoàn hiện tại", 0, "STT_XE_DOAN"], // Row 4
+    ["Đường link file doc mẫu đăng ký", "", "LINK_FILE_DOC_MAU"], // Row 5
+    ["Đường link folder lưu đơn đăng ký", "", "LINK_FOLDER_DON_DANG_KY"], // Row 6
     [
       "Hướng dẫn lưu trú",
       "https://drive.google.com/file/d/1NDOjKjQPos0E0HT59FkHiUGAlXtjIDvc/view",
+      "LINK_HUONG_DAN_LUU_TRU",
     ], // Row 7
-    ["Năm", 2026], // Row 8
-    ["Giới tính thiền sinh", "Nam"], // Row 9
-    ["Độ tuổi", "2009-2012"], // Row 10
-    ["Link nhóm Zalo", "https://www.google.com"], // Row 11
-    ["Trực đường dây nóng 1", "Phật tử Diệu Từ"], // Row 12
-    ["Số điện thoại đường dây nóng 1", "0988 237 713"], // Row 13
-    ["Trực đường dây nóng 2", "Phật tử Chân Mỹ Nghiêm"], // Row 14
-    ["Số điện thoại đường dây nóng 2", "0848 349 129"], // Row 15
-    ["Thời gian tập trung xe đoàn", "8h30 - 11h30"], // Row 16
-    ["Ngày tập trung xe đoàn", new Date(2026, 6, 5)], // Row 17 (July 5, 2026)
-    ["Giờ kết khoá", "15h30"], // Row 18
-    ["Ngày kết khoá", new Date(2026, 6, 8)], // Row 19 (July 8, 2026)
+    ["Năm", 2026, "NAM"], // Row 8
+    ["Giới tính thiền sinh", "Nam", "GIOI_TINH"], // Row 9
+    ["Độ tuổi", "2009-2012", "DO_TUOI"], // Row 10
+    ["Link nhóm Zalo", "https://www.google.com", "LINK_NHOM_ZALO"], // Row 11
+    ["Trực đường dây nóng 1", "Phật tử Diệu Từ", "DUONG_DAY_NONG_1"], // Row 12
+    ["Số điện thoại đường dây nóng 1", "0988 237 713", "SDT_DUONG_DAY_NONG_1"], // Row 13
+    ["Trực đường dây nóng 2", "Phật tử Chân Mỹ Nghiêm", "DUONG_DAY_NONG_2"], // Row 14
+    ["Số điện thoại đường dây nóng 2", "0848 349 129", "SDT_DUONG_DAY_NONG_2"], // Row 15
+    ["Thời gian tập trung xe đoàn", "8h30 - 11h30", "THOI_GIAN_TAP_TRUNG_XE_DOAN"], // Row 16
+    ["Ngày tập trung xe đoàn", new Date(2026, 6, 5), "NGAY_TAP_TRUNG_XE_DOAN"], // Row 17 (July 5, 2026)
+    ["Giờ kết khoá", "15h30", "GIO_KET_KHOA"], // Row 18
+    ["Ngày kết khoá", new Date(2026, 6, 8), "NGAY_KET_KHOA"], // Row 19 (July 8, 2026)
   ];
 
   // Set the data
-  const range = sheet.getRange(1, 1, data.length, 2);
+  const range = sheet.getRange(1, 1, data.length, 3);
   range.setValues(data);
 
   // Format the header row if you want
